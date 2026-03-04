@@ -391,9 +391,25 @@ export const getAmfsCaptchaToken = async ({
     scene,
     userId,
   });
-  return (
-    risk?.eventId || risk?.eventID || risk?.event_id || risk?.requestId || ''
+
+  const eventIdCandidates = [
+    risk?.eventId,
+    risk?.eventID,
+    risk?.event_id,
+    risk?.event?.eventId,
+    risk?.event?.eventID,
+    risk?.event?.event_id,
+    risk?.collect?.eventId,
+    risk?.collectResult?.eventId,
+    risk?.data?.eventId,
+    risk?.data?.eventID,
+    risk?.data?.event_id,
+  ];
+
+  const eventId = eventIdCandidates.find(
+    (candidate) => typeof candidate === 'string' && candidate.trim() !== '',
   );
+  return eventId ? eventId.trim() : '';
 };
 
 export function verifyJSONPromise(value) {

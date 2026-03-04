@@ -198,6 +198,12 @@ func verifyAMFSByScore(c *gin.Context, eventID string) (bool, error) {
 	if strings.TrimSpace(common.AMFSApiBase) == "" || strings.TrimSpace(common.AMFSSiteID) == "" {
 		return false, fmt.Errorf("amfs config missing")
 	}
+	if strings.HasPrefix(eventID, "req_") {
+		return false, fmt.Errorf("invalid AMFS token: got requestId(%s), expected eventId(evt_*)", eventID)
+	}
+	if !strings.HasPrefix(eventID, "evt_") {
+		return false, fmt.Errorf("invalid AMFS token format: expected eventId(evt_*), got %s", eventID)
+	}
 	apiBase, validateErr := common.ValidateAMFSBaseURL(common.AMFSApiBase)
 	if validateErr != nil {
 		return false, validateErr
