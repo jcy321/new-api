@@ -3705,6 +3705,14 @@
     "默认折叠侧边栏": "Mặc định thu gọn thanh bên",
     "默认测试模型": "Mô hình kiểm tra mặc định",
     "默认用户消息": "Xin chào",
-    "默认补全倍率": "Tỷ lệ hoàn thành mặc định"
+    "默认补全倍率": "Tỷ lệ hoàn thành mặc định",
+    "允许验证码用户校验": "Cho phép xác minh người dùng bằng captcha",
+    "配置验证码": "Cấu hình captcha",
+    "验证码提供商": "Nhà cung cấp captcha",
+    "hCaptcha Site Key": "hCaptcha Site Key",
+    "hCaptcha Secret Key": "hCaptcha Secret Key",
+    "保存验证码设置": "Lưu cài đặt captcha",
+    "请稍后几秒重试，验证码正在检查用户环境！": "Vui lòng thử lại sau vài giây, captcha đang kiểm tra môi trường người dùng!",
+    "验证码已启用但 Site Key 为空。": "Captcha đã bật nhưng Site Key đang để trống."
   }
 }

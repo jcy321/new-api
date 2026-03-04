@@ -20,7 +20,7 @@ For commercial licensing, please contact support@quantumnous.com
 import React from 'react';
 import { Banner, Input, Modal, Typography } from '@douyinfe/semi-ui';
 import { IconDelete, IconUser } from '@douyinfe/semi-icons';
-import Turnstile from 'react-turnstile';
+import CaptchaWidget from '../../../common/captcha/CaptchaWidget';
 
 const AccountDeleteModal = ({
   t,
@@ -30,9 +30,10 @@ const AccountDeleteModal = ({
   handleInputChange,
   deleteAccount,
   userState,
-  turnstileEnabled,
-  turnstileSiteKey,
-  setTurnstileToken,
+  captchaEnabled,
+  captchaProvider,
+  captchaSiteKey,
+  setCaptchaToken,
 }) => {
   return (
     <Modal
@@ -76,12 +77,13 @@ const AccountDeleteModal = ({
           />
         </div>
 
-        {turnstileEnabled && (
+        {captchaEnabled && (
           <div className='flex justify-center'>
-            <Turnstile
-              sitekey={turnstileSiteKey}
+            <CaptchaWidget
+              provider={captchaProvider}
+              siteKey={captchaSiteKey}
               onVerify={(token) => {
-                setTurnstileToken(token);
+                setCaptchaToken(token);
               }}
             />
           </div>

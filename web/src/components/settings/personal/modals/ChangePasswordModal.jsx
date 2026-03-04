@@ -20,7 +20,7 @@ For commercial licensing, please contact support@quantumnous.com
 import React from 'react';
 import { Input, Modal, Typography } from '@douyinfe/semi-ui';
 import { IconLock } from '@douyinfe/semi-icons';
-import Turnstile from 'react-turnstile';
+import CaptchaWidget from '../../../common/captcha/CaptchaWidget';
 
 const ChangePasswordModal = ({
   t,
@@ -29,9 +29,10 @@ const ChangePasswordModal = ({
   inputs,
   handleInputChange,
   changePassword,
-  turnstileEnabled,
-  turnstileSiteKey,
-  setTurnstileToken,
+  captchaEnabled,
+  captchaProvider,
+  captchaSiteKey,
+  setCaptchaToken,
 }) => {
   return (
     <Modal
@@ -99,12 +100,13 @@ const ChangePasswordModal = ({
           />
         </div>
 
-        {turnstileEnabled && (
+        {captchaEnabled && (
           <div className='flex justify-center'>
-            <Turnstile
-              sitekey={turnstileSiteKey}
+            <CaptchaWidget
+              provider={captchaProvider}
+              siteKey={captchaSiteKey}
               onVerify={(token) => {
-                setTurnstileToken(token);
+                setCaptchaToken(token);
               }}
             />
           </div>

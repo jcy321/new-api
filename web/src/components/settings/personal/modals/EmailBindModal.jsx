@@ -20,7 +20,7 @@ For commercial licensing, please contact support@quantumnous.com
 import React from 'react';
 import { Button, Input, Modal } from '@douyinfe/semi-ui';
 import { IconMail, IconKey } from '@douyinfe/semi-icons';
-import Turnstile from 'react-turnstile';
+import CaptchaWidget from '../../../common/captcha/CaptchaWidget';
 
 const EmailBindModal = ({
   t,
@@ -33,9 +33,10 @@ const EmailBindModal = ({
   disableButton,
   loading,
   countdown,
-  turnstileEnabled,
-  turnstileSiteKey,
-  setTurnstileToken,
+  captchaEnabled,
+  captchaProvider,
+  captchaSiteKey,
+  setCaptchaToken,
 }) => {
   return (
     <Modal
@@ -90,12 +91,13 @@ const EmailBindModal = ({
           prefix={<IconKey />}
         />
 
-        {turnstileEnabled && (
+        {captchaEnabled && (
           <div className='flex justify-center'>
-            <Turnstile
-              sitekey={turnstileSiteKey}
+            <CaptchaWidget
+              provider={captchaProvider}
+              siteKey={captchaSiteKey}
               onVerify={(token) => {
-                setTurnstileToken(token);
+                setCaptchaToken(token);
               }}
             />
           </div>

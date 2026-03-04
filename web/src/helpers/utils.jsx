@@ -287,6 +287,15 @@ export const verifyJSON = (str) => {
   return true;
 };
 
+export const getCaptchaQueryString = (token, captchaProvider = 'turnstile') => {
+  if (!token) return '';
+  const encodedToken = encodeURIComponent(token);
+  if (captchaProvider === 'hcaptcha') {
+    return `hcaptcha=${encodedToken}&captcha=${encodedToken}`;
+  }
+  return `turnstile=${encodedToken}&captcha=${encodedToken}`;
+};
+
 export function verifyJSONPromise(value) {
   try {
     JSON.parse(value);

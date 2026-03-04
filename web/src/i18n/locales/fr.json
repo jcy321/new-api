@@ -3152,6 +3152,14 @@
     "默认折叠侧边栏": "Réduire la barre latérale par défaut",
     "默认测试模型": "Modèle de test par défaut",
     "默认用户消息": "Bonjour",
-    "默认补全倍率": "Taux de complétion par défaut"
+    "默认补全倍率": "Taux de complétion par défaut",
+    "允许验证码用户校验": "Autoriser la vérification utilisateur par captcha",
+    "配置验证码": "Configurer le captcha",
+    "验证码提供商": "Fournisseur de captcha",
+    "hCaptcha Site Key": "Clé du site hCaptcha",
+    "hCaptcha Secret Key": "Clé secrète hCaptcha",
+    "保存验证码设置": "Enregistrer les paramètres du captcha",
+    "请稍后几秒重试，验证码正在检查用户环境！": "Veuillez réessayer dans quelques secondes, le captcha vérifie l'environnement utilisateur !",
+    "验证码已启用但 Site Key 为空。": "Le captcha est activé mais la clé de site est vide."
   }
 }

@@ -31,8 +31,9 @@ import {
   setUserData,
   onDiscordOAuthClicked,
   onCustomOAuthClicked,
+  getCaptchaQueryString,
 } from '../../helpers';
-import Turnstile from 'react-turnstile';
+import CaptchaWidget from '../common/captcha/CaptchaWidget';
 import {
   Button,
   Card,
@@ -84,9 +85,10 @@ const RegisterForm = () => {
   const { username, password, password2 } = inputs;
   const [userState, userDispatch] = useContext(UserContext);
   const [statusState] = useContext(StatusContext);
-  const [turnstileEnabled, setTurnstileEnabled] = useState(false);
-  const [turnstileSiteKey, setTurnstileSiteKey] = useState('');
-  const [turnstileToken, setTurnstileToken] = useState('');
+  const [captchaEnabled, setCaptchaEnabled] = useState(false);
+  const [captchaSiteKey, setCaptchaSiteKey] = useState('');
+  const [captchaToken, setCaptchaToken] = useState('');
+  const [captchaProvider, setCaptchaProvider] = useState('turnstile');
   const [showWeChatLoginModal, setShowWeChatLoginModal] = useState(false);
   const [showEmailRegister, setShowEmailRegister] = useState(false);
   const [wechatLoading, setWechatLoading] = useState(false);
@@ -145,9 +147,15 @@ const RegisterForm = () => {
 
   useEffect(() => {
     setShowEmailVerification(!!status?.email_verification);
-    if (status?.turnstile_check) {
-      setTurnstileEnabled(true);
-      setTurnstileSiteKey(status.turnstile_site_key);
+    const isCaptchaEnabled = status?.captcha_check ?? status?.turnstile_check;
+    if (isCaptchaEnabled) {
+      setCaptchaEnabled(true);
+      setCaptchaSiteKey(status.captcha_site_key || status.turnstile_site_key);
+      setCaptchaProvider(status.captcha_provider || 'turnstile');
+    } else {
+      setCaptchaEnabled(false);
+      setCaptchaSiteKey('');
+      setCaptchaProvider('turnstile');
     }
 
     // 从 status 获取用户协议和隐私政策的启用状态
@@ -183,8 +191,8 @@ const RegisterForm = () => {
   };
 
   const onSubmitWeChatVerificationCode = async () => {
-    if (turnstileEnabled && turnstileToken === '') {
-      showInfo('请稍后几秒重试，Turnstile 正在检查用户环境！');
+    if (captchaEnabled && captchaToken === '') {
+      showInfo(t('请稍后几秒重试，验证码正在检查用户环境！'));
       return;
     }
     setWechatCodeSubmitLoading(true);
@@ -225,20 +233,21 @@ const RegisterForm = () => {
       return;
     }
     if (username && password) {
-      if (turnstileEnabled && turnstileToken === '') {
-        showInfo('请稍后几秒重试，Turnstile 正在检查用户环境！');
+      if (captchaEnabled && captchaToken === '') {
+        showInfo(t('请稍后几秒重试，验证码正在检查用户环境！'));
         return;
       }
       setRegisterLoading(true);
       try {
+        const captchaQuery = getCaptchaQueryString(captchaToken, captchaProvider);
+        const registerUrl = captchaQuery
+          ? `/api/user/register?${captchaQuery}`
+          : '/api/user/register';
         if (!affCode) {
           affCode = localStorage.getItem('aff');
         }
         inputs.aff_code = affCode;
-        const res = await API.post(
-          `/api/user/register?turnstile=${turnstileToken}`,
-          inputs,
-        );
+        const res = await API.post(registerUrl, inputs);
         const { success, message } = res.data;
         if (success) {
           navigate('/login');
@@ -256,14 +265,15 @@ const RegisterForm = () => {
 
   const sendVerificationCode = async () => {
     if (inputs.email === '') return;
-    if (turnstileEnabled && turnstileToken === '') {
-      showInfo('请稍后几秒重试，Turnstile 正在检查用户环境！');
+    if (captchaEnabled && captchaToken === '') {
+      showInfo(t('请稍后几秒重试，验证码正在检查用户环境！'));
       return;
     }
     setVerificationCodeLoading(true);
     try {
+      const captchaQuery = getCaptchaQueryString(captchaToken, captchaProvider);
       const res = await API.get(
-        `/api/verification?email=${encodeURIComponent(inputs.email)}&turnstile=${turnstileToken}`,
+        `/api/verification?email=${encodeURIComponent(inputs.email)}${captchaQuery ? `&${captchaQuery}` : ''}`,
       );
       const { success, message } = res.data;
       if (success) {
@@ -787,12 +797,13 @@ const RegisterForm = () => {
           : renderOAuthOptions()}
         {renderWeChatLoginModal()}
 
-        {turnstileEnabled && (
+        {captchaEnabled && (
           <div className='flex justify-center mt-6'>
-            <Turnstile
-              sitekey={turnstileSiteKey}
+            <CaptchaWidget
+              provider={captchaProvider}
+              siteKey={captchaSiteKey}
               onVerify={(token) => {
-                setTurnstileToken(token);
+                setCaptchaToken(token);
               }}
             />
           </div>
