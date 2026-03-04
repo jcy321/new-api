@@ -3183,6 +3183,14 @@
     "默认折叠侧边栏": "Default collapse sidebar",
     "默认测试模型": "Default Test Model",
     "默认用户消息": "Default User Message",
-    "默认补全倍率": "Default completion ratio"
+    "默认补全倍率": "Default completion ratio",
+    "允许验证码用户校验": "Allow captcha user verification",
+    "配置验证码": "Configure captcha",
+    "验证码提供商": "Captcha provider",
+    "hCaptcha Site Key": "hCaptcha Site Key",
+    "hCaptcha Secret Key": "hCaptcha Secret Key",
+    "保存验证码设置": "Save captcha settings",
+    "请稍后几秒重试，验证码正在检查用户环境！": "Please retry in a few seconds, captcha is checking the user environment!",
+    "验证码已启用但 Site Key 为空。": "Captcha is enabled but Site Key is empty."
   }
 }
