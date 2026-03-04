@@ -293,7 +293,65 @@ export const getCaptchaQueryString = (token, captchaProvider = 'turnstile') => {
   if (captchaProvider === 'hcaptcha') {
     return `hcaptcha=${encodedToken}&captcha=${encodedToken}`;
   }
+  if (captchaProvider === 'amfs') {
+    return `amfs=${encodedToken}&captcha=${encodedToken}`;
+  }
   return `turnstile=${encodedToken}&captcha=${encodedToken}`;
+};
+
+let amfsSdkLoadPromise = null;
+let amfsInitializedKey = '';
+
+const loadAmfsSdk = (apiBase) => {
+  if (window.AmeFingerprint) {
+    return Promise.resolve();
+  }
+  if (amfsSdkLoadPromise) {
+    return amfsSdkLoadPromise;
+  }
+  amfsSdkLoadPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = `${removeTrailingSlash(apiBase)}/sdk/fp.min.js`;
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('AMFS SDK 加载失败'));
+    document.head.appendChild(script);
+  });
+  return amfsSdkLoadPromise;
+};
+
+export const getAmfsCaptchaToken = async ({
+  apiBase,
+  siteId,
+  scene = 'login',
+  userId,
+}) => {
+  if (!apiBase || !siteId) {
+    throw new Error('AMFS 配置不完整');
+  }
+  await loadAmfsSdk(apiBase);
+  if (!window.AmeFingerprint) {
+    throw new Error('AMFS SDK 不可用');
+  }
+
+  const initKey = `${apiBase}::${siteId}`;
+  if (amfsInitializedKey !== initKey) {
+    window.AmeFingerprint.init({
+      siteId,
+      apiBase,
+      wasmBase: `${removeTrailingSlash(apiBase)}/cdn/wasm`,
+      debug: false,
+    });
+    amfsInitializedKey = initKey;
+  }
+
+  const risk = await window.AmeFingerprint.getRisk({
+    scene,
+    userId,
+  });
+  return (
+    risk?.eventId || risk?.eventID || risk?.event_id || risk?.requestId || ''
+  );
 };
 
 export function verifyJSONPromise(value) {

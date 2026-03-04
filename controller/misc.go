@@ -50,6 +50,11 @@ func GetStatus(c *gin.Context) {
 	if common.CaptchaProvider == "hcaptcha" {
 		captchaSiteKey = common.HCaptchaSiteKey
 	}
+	if common.CaptchaProvider == "amfs" {
+		captchaSiteKey = ""
+	}
+	captchaCheckEnabled := common.TurnstileCheckEnabled && common.CaptchaProvider != "amfs"
+	amfsLoginCheckEnabled := common.TurnstileCheckEnabled && common.CaptchaProvider == "amfs"
 
 	data := gin.H{
 		"version":                     common.Version,
@@ -71,9 +76,12 @@ func GetStatus(c *gin.Context) {
 		"wechat_login":                common.WeChatAuthEnabled,
 		"server_address":              system_setting.ServerAddress,
 		"captcha_provider":            common.CaptchaProvider,
-		"captcha_check":               common.TurnstileCheckEnabled,
+		"captcha_check":               captchaCheckEnabled,
 		"captcha_site_key":            captchaSiteKey,
-		"turnstile_check":             common.TurnstileCheckEnabled,
+		"amfs_api_base":               common.AMFSApiBase,
+		"amfs_login_check":            amfsLoginCheckEnabled,
+		"amfs_site_id":                common.AMFSSiteID,
+		"turnstile_check":             captchaCheckEnabled,
 		"turnstile_site_key":          common.TurnstileSiteKey,
 		"top_up_link":                 common.TopUpLink,
 		"docs_link":                   operation_setting.GetGeneralSetting().DocsLink,
