@@ -31,6 +31,7 @@ import {
   setUserData,
   onDiscordOAuthClicked,
   onCustomOAuthClicked,
+  getCaptchaQueryString,
 } from '../../helpers';
 import CaptchaWidget from '../common/captcha/CaptchaWidget';
 import {
@@ -84,9 +85,9 @@ const RegisterForm = () => {
   const { username, password, password2 } = inputs;
   const [userState, userDispatch] = useContext(UserContext);
   const [statusState] = useContext(StatusContext);
-  const [turnstileEnabled, setTurnstileEnabled] = useState(false);
-  const [turnstileSiteKey, setTurnstileSiteKey] = useState('');
-  const [turnstileToken, setTurnstileToken] = useState('');
+  const [captchaEnabled, setCaptchaEnabled] = useState(false);
+  const [captchaSiteKey, setCaptchaSiteKey] = useState('');
+  const [captchaToken, setCaptchaToken] = useState('');
   const [captchaProvider, setCaptchaProvider] = useState('turnstile');
   const [showWeChatLoginModal, setShowWeChatLoginModal] = useState(false);
   const [showEmailRegister, setShowEmailRegister] = useState(false);
@@ -146,14 +147,14 @@ const RegisterForm = () => {
 
   useEffect(() => {
     setShowEmailVerification(!!status?.email_verification);
-    const captchaEnabled = status?.captcha_check ?? status?.turnstile_check;
-    if (captchaEnabled) {
-      setTurnstileEnabled(true);
-      setTurnstileSiteKey(status.captcha_site_key || status.turnstile_site_key);
+    const isCaptchaEnabled = status?.captcha_check ?? status?.turnstile_check;
+    if (isCaptchaEnabled) {
+      setCaptchaEnabled(true);
+      setCaptchaSiteKey(status.captcha_site_key || status.turnstile_site_key);
       setCaptchaProvider(status.captcha_provider || 'turnstile');
     } else {
-      setTurnstileEnabled(false);
-      setTurnstileSiteKey('');
+      setCaptchaEnabled(false);
+      setCaptchaSiteKey('');
       setCaptchaProvider('turnstile');
     }
 
@@ -161,15 +162,6 @@ const RegisterForm = () => {
     setHasUserAgreement(status?.user_agreement_enabled || false);
     setHasPrivacyPolicy(status?.privacy_policy_enabled || false);
   }, [status]);
-
-  const getCaptchaQuery = (token) => {
-    if (!token) return '';
-    const encodedToken = encodeURIComponent(token);
-    if (captchaProvider === 'hcaptcha') {
-      return `hcaptcha=${encodedToken}&captcha=${encodedToken}`;
-    }
-    return `turnstile=${encodedToken}&captcha=${encodedToken}`;
-  };
 
   useEffect(() => {
     let countdownInterval = null;
@@ -199,7 +191,7 @@ const RegisterForm = () => {
   };
 
   const onSubmitWeChatVerificationCode = async () => {
-    if (turnstileEnabled && turnstileToken === '') {
+    if (captchaEnabled && captchaToken === '') {
       showInfo(t('请稍后几秒重试，验证码正在检查用户环境！'));
       return;
     }
@@ -241,20 +233,21 @@ const RegisterForm = () => {
       return;
     }
     if (username && password) {
-      if (turnstileEnabled && turnstileToken === '') {
+      if (captchaEnabled && captchaToken === '') {
         showInfo(t('请稍后几秒重试，验证码正在检查用户环境！'));
         return;
       }
       setRegisterLoading(true);
       try {
+        const captchaQuery = getCaptchaQueryString(captchaToken, captchaProvider);
+        const registerUrl = captchaQuery
+          ? `/api/user/register?${captchaQuery}`
+          : '/api/user/register';
         if (!affCode) {
           affCode = localStorage.getItem('aff');
         }
         inputs.aff_code = affCode;
-        const res = await API.post(
-          `/api/user/register?${getCaptchaQuery(turnstileToken)}`,
-          inputs,
-        );
+        const res = await API.post(registerUrl, inputs);
         const { success, message } = res.data;
         if (success) {
           navigate('/login');
@@ -272,14 +265,15 @@ const RegisterForm = () => {
 
   const sendVerificationCode = async () => {
     if (inputs.email === '') return;
-    if (turnstileEnabled && turnstileToken === '') {
+    if (captchaEnabled && captchaToken === '') {
       showInfo(t('请稍后几秒重试，验证码正在检查用户环境！'));
       return;
     }
     setVerificationCodeLoading(true);
     try {
+      const captchaQuery = getCaptchaQueryString(captchaToken, captchaProvider);
       const res = await API.get(
-        `/api/verification?email=${encodeURIComponent(inputs.email)}&${getCaptchaQuery(turnstileToken)}`,
+        `/api/verification?email=${encodeURIComponent(inputs.email)}${captchaQuery ? `&${captchaQuery}` : ''}`,
       );
       const { success, message } = res.data;
       if (success) {
@@ -803,13 +797,13 @@ const RegisterForm = () => {
           : renderOAuthOptions()}
         {renderWeChatLoginModal()}
 
-        {turnstileEnabled && (
+        {captchaEnabled && (
           <div className='flex justify-center mt-6'>
             <CaptchaWidget
               provider={captchaProvider}
-              siteKey={turnstileSiteKey}
+              siteKey={captchaSiteKey}
               onVerify={(token) => {
-                setTurnstileToken(token);
+                setCaptchaToken(token);
               }}
             />
           </div>

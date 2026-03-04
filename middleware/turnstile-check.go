@@ -29,20 +29,20 @@ func TurnstileCheck() gin.HandlerFunc {
 				provider = "turnstile"
 			}
 
+			primaryParam := "turnstile"
+			fallbackParam := "hcaptcha"
+			if provider == "hcaptcha" {
+				primaryParam = "hcaptcha"
+				fallbackParam = "turnstile"
+			}
+
 			response := c.Query("captcha")
 			if response == "" {
-				if provider == "hcaptcha" {
-					response = c.Query("hcaptcha")
-				} else {
-					response = c.Query("turnstile")
-				}
+				response = c.Query(primaryParam)
 			}
 			if response == "" {
-				// Backward and forward compatibility.
-				response = c.Query("turnstile")
-			}
-			if response == "" {
-				response = c.Query("hcaptcha")
+				// Backward compatibility with the other provider-specific parameter.
+				response = c.Query(fallbackParam)
 			}
 			if response == "" {
 				message := "Turnstile token 为空"

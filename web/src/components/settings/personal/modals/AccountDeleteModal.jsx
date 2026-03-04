@@ -30,10 +30,10 @@ const AccountDeleteModal = ({
   handleInputChange,
   deleteAccount,
   userState,
-  turnstileEnabled,
+  captchaEnabled,
   captchaProvider,
-  turnstileSiteKey,
-  setTurnstileToken,
+  captchaSiteKey,
+  setCaptchaToken,
 }) => {
   return (
     <Modal
@@ -77,13 +77,13 @@ const AccountDeleteModal = ({
           />
         </div>
 
-        {turnstileEnabled && (
+        {captchaEnabled && (
           <div className='flex justify-center'>
             <CaptchaWidget
               provider={captchaProvider}
-              siteKey={turnstileSiteKey}
+              siteKey={captchaSiteKey}
               onVerify={(token) => {
-                setTurnstileToken(token);
+                setCaptchaToken(token);
               }}
             />
           </div>

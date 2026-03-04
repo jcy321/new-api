@@ -592,7 +592,7 @@ const SystemSetting = () => {
     await updateOptions(options);
   };
 
-  const submitTurnstile = async () => {
+  const submitCaptchaSettings = async () => {
     const options = [];
 
     if (originInputs['CaptchaProvider'] !== inputs.CaptchaProvider) {
@@ -1673,7 +1673,7 @@ const SystemSetting = () => {
                       />
                     </Col>
                   </Row>
-                  <Button onClick={submitTurnstile}>
+                  <Button onClick={submitCaptchaSettings}>
                     {t('保存验证码设置')}
                   </Button>
                 </Form.Section>

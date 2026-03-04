@@ -25,6 +25,7 @@ import {
   showInfo,
   showSuccess,
   getSystemName,
+  getCaptchaQueryString,
 } from '../../helpers';
 import CaptchaWidget from '../common/captcha/CaptchaWidget';
 import { Button, Card, Form, Typography } from '@douyinfe/semi-ui';
@@ -42,9 +43,9 @@ const PasswordResetForm = () => {
   const { email } = inputs;
 
   const [loading, setLoading] = useState(false);
-  const [turnstileEnabled, setTurnstileEnabled] = useState(false);
-  const [turnstileSiteKey, setTurnstileSiteKey] = useState('');
-  const [turnstileToken, setTurnstileToken] = useState('');
+  const [captchaEnabled, setCaptchaEnabled] = useState(false);
+  const [captchaSiteKey, setCaptchaSiteKey] = useState('');
+  const [captchaToken, setCaptchaToken] = useState('');
   const [captchaProvider, setCaptchaProvider] = useState('turnstile');
   const [disableButton, setDisableButton] = useState(false);
   const [countdown, setCountdown] = useState(30);
@@ -56,23 +57,14 @@ const PasswordResetForm = () => {
     let status = localStorage.getItem('status');
     if (status) {
       status = JSON.parse(status);
-      const captchaEnabled = status.captcha_check ?? status.turnstile_check;
-      if (captchaEnabled) {
-        setTurnstileEnabled(true);
-        setTurnstileSiteKey(status.captcha_site_key || status.turnstile_site_key);
+      const isCaptchaEnabled = status.captcha_check ?? status.turnstile_check;
+      if (isCaptchaEnabled) {
+        setCaptchaEnabled(true);
+        setCaptchaSiteKey(status.captcha_site_key || status.turnstile_site_key);
         setCaptchaProvider(status.captcha_provider || 'turnstile');
       }
     }
   }, []);
-
-  const getCaptchaQuery = (token) => {
-    if (!token) return '';
-    const encodedToken = encodeURIComponent(token);
-    if (captchaProvider === 'hcaptcha') {
-      return `hcaptcha=${encodedToken}&captcha=${encodedToken}`;
-    }
-    return `turnstile=${encodedToken}&captcha=${encodedToken}`;
-  };
 
   useEffect(() => {
     let countdownInterval = null;
@@ -96,15 +88,15 @@ const PasswordResetForm = () => {
       showError(t('请输入邮箱地址'));
       return;
     }
-    if (turnstileEnabled && turnstileToken === '') {
+    if (captchaEnabled && captchaToken === '') {
       showInfo(t('请稍后几秒重试，验证码正在检查用户环境！'));
       return;
     }
     setDisableButton(true);
     setLoading(true);
-    const res = await API.get(
-      `/api/reset_password?email=${email}&${getCaptchaQuery(turnstileToken)}`,
-    );
+    const captchaQuery = getCaptchaQueryString(captchaToken, captchaProvider);
+    const resetUrl = `/api/reset_password?email=${email}${captchaQuery ? `&${captchaQuery}` : ''}`;
+    const res = await API.get(resetUrl);
     const { success, message } = res.data;
     if (success) {
       showSuccess(t('重置邮件发送成功，请检查邮箱！'));
@@ -185,13 +177,13 @@ const PasswordResetForm = () => {
               </div>
             </Card>
 
-            {turnstileEnabled && (
+            {captchaEnabled && (
               <div className='flex justify-center mt-6'>
                 <CaptchaWidget
                   provider={captchaProvider}
-                  siteKey={turnstileSiteKey}
+                  siteKey={captchaSiteKey}
                   onVerify={(token) => {
-                    setTurnstileToken(token);
+                    setCaptchaToken(token);
                   }}
                 />
               </div>

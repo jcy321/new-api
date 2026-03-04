@@ -39,6 +39,7 @@ import {
   prepareCredentialRequestOptions,
   buildAssertionResult,
   isPasskeySupported,
+  getCaptchaQueryString,
 } from '../../helpers';
 import CaptchaWidget from '../common/captcha/CaptchaWidget';
 import {
@@ -85,9 +86,9 @@ const LoginForm = () => {
   const [submitted, setSubmitted] = useState(false);
   const [userState, userDispatch] = useContext(UserContext);
   const [statusState] = useContext(StatusContext);
-  const [turnstileEnabled, setTurnstileEnabled] = useState(false);
-  const [turnstileSiteKey, setTurnstileSiteKey] = useState('');
-  const [turnstileToken, setTurnstileToken] = useState('');
+  const [captchaEnabled, setCaptchaEnabled] = useState(false);
+  const [captchaSiteKey, setCaptchaSiteKey] = useState('');
+  const [captchaToken, setCaptchaToken] = useState('');
   const [captchaProvider, setCaptchaProvider] = useState('turnstile');
   const [showWeChatLoginModal, setShowWeChatLoginModal] = useState(false);
   const [showEmailLogin, setShowEmailLogin] = useState(false);
@@ -145,14 +146,14 @@ const LoginForm = () => {
   );
 
   useEffect(() => {
-    const captchaEnabled = status?.captcha_check ?? status?.turnstile_check;
-    if (captchaEnabled) {
-      setTurnstileEnabled(true);
-      setTurnstileSiteKey(status.captcha_site_key || status.turnstile_site_key);
+    const isCaptchaEnabled = status?.captcha_check ?? status?.turnstile_check;
+    if (isCaptchaEnabled) {
+      setCaptchaEnabled(true);
+      setCaptchaSiteKey(status.captcha_site_key || status.turnstile_site_key);
       setCaptchaProvider(status.captcha_provider || 'turnstile');
     } else {
-      setTurnstileEnabled(false);
-      setTurnstileSiteKey('');
+      setCaptchaEnabled(false);
+      setCaptchaSiteKey('');
       setCaptchaProvider('turnstile');
     }
 
@@ -160,15 +161,6 @@ const LoginForm = () => {
     setHasUserAgreement(status?.user_agreement_enabled || false);
     setHasPrivacyPolicy(status?.privacy_policy_enabled || false);
   }, [status]);
-
-  const getCaptchaQuery = (token) => {
-    if (!token) return '';
-    const encodedToken = encodeURIComponent(token);
-    if (captchaProvider === 'hcaptcha') {
-      return `hcaptcha=${encodedToken}&captcha=${encodedToken}`;
-    }
-    return `turnstile=${encodedToken}&captcha=${encodedToken}`;
-  };
 
   useEffect(() => {
     isPasskeySupported()
@@ -199,7 +191,7 @@ const LoginForm = () => {
   };
 
   const onSubmitWeChatVerificationCode = async () => {
-    if (turnstileEnabled && turnstileToken === '') {
+    if (captchaEnabled && captchaToken === '') {
       showInfo(t('请稍后几秒重试，验证码正在检查用户环境！'));
       return;
     }
@@ -236,7 +228,7 @@ const LoginForm = () => {
       showInfo(t('请先阅读并同意用户协议和隐私政策'));
       return;
     }
-    if (turnstileEnabled && turnstileToken === '') {
+    if (captchaEnabled && captchaToken === '') {
       showInfo(t('请稍后几秒重试，验证码正在检查用户环境！'));
       return;
     }
@@ -244,8 +236,12 @@ const LoginForm = () => {
     setLoginLoading(true);
     try {
       if (username && password) {
+        const captchaQuery = getCaptchaQueryString(captchaToken, captchaProvider);
+        const loginUrl = captchaQuery
+          ? `/api/user/login?${captchaQuery}`
+          : '/api/user/login';
         const res = await API.post(
-          `/api/user/login?${getCaptchaQuery(turnstileToken)}`,
+          loginUrl,
           {
             username,
             password,
@@ -981,13 +977,13 @@ const LoginForm = () => {
         {renderWeChatLoginModal()}
         {render2FAModal()}
 
-        {turnstileEnabled && (
+        {captchaEnabled && (
           <div className='flex justify-center mt-6'>
             <CaptchaWidget
               provider={captchaProvider}
-              siteKey={turnstileSiteKey}
+              siteKey={captchaSiteKey}
               onVerify={(token) => {
-                setTurnstileToken(token);
+                setCaptchaToken(token);
               }}
             />
           </div>

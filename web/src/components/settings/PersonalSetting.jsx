@@ -30,6 +30,7 @@ import {
   buildRegistrationResult,
   isPasskeySupported,
   setUserData,
+  getCaptchaQueryString,
 } from '../../helpers';
 import { UserContext } from '../../context/User';
 import { Modal } from '@douyinfe/semi-ui';
@@ -65,10 +66,10 @@ const PersonalSetting = () => {
   const [showWeChatBindModal, setShowWeChatBindModal] = useState(false);
   const [showEmailBindModal, setShowEmailBindModal] = useState(false);
   const [showAccountDeleteModal, setShowAccountDeleteModal] = useState(false);
-  const [turnstileEnabled, setTurnstileEnabled] = useState(false);
+  const [captchaEnabled, setCaptchaEnabled] = useState(false);
   const [captchaProvider, setCaptchaProvider] = useState('turnstile');
-  const [turnstileSiteKey, setTurnstileSiteKey] = useState('');
-  const [turnstileToken, setTurnstileToken] = useState('');
+  const [captchaSiteKey, setCaptchaSiteKey] = useState('');
+  const [captchaToken, setCaptchaToken] = useState('');
   const [loading, setLoading] = useState(false);
   const [disableButton, setDisableButton] = useState(false);
   const [countdown, setCountdown] = useState(30);
@@ -97,17 +98,17 @@ const PersonalSetting = () => {
     if (saved) {
       const parsed = JSON.parse(saved);
       setStatus(parsed);
-      const captchaEnabled = parsed.captcha_check ?? parsed.turnstile_check;
-      if (captchaEnabled) {
-        setTurnstileEnabled(true);
+      const isCaptchaEnabled = parsed.captcha_check ?? parsed.turnstile_check;
+      if (isCaptchaEnabled) {
+        setCaptchaEnabled(true);
         setCaptchaProvider(parsed.captcha_provider || 'turnstile');
-        setTurnstileSiteKey(
+        setCaptchaSiteKey(
           parsed.captcha_site_key || parsed.turnstile_site_key || '',
         );
       } else {
-        setTurnstileEnabled(false);
+        setCaptchaEnabled(false);
         setCaptchaProvider('turnstile');
-        setTurnstileSiteKey('');
+        setCaptchaSiteKey('');
       }
     }
     // Always refresh status from server to avoid stale flags (e.g., admin just enabled OAuth)
@@ -118,17 +119,17 @@ const PersonalSetting = () => {
         if (success && data) {
           setStatus(data);
           setStatusData(data);
-          const captchaEnabled = data.captcha_check ?? data.turnstile_check;
-          if (captchaEnabled) {
-            setTurnstileEnabled(true);
+          const isCaptchaEnabled = data.captcha_check ?? data.turnstile_check;
+          if (isCaptchaEnabled) {
+            setCaptchaEnabled(true);
             setCaptchaProvider(data.captcha_provider || 'turnstile');
-            setTurnstileSiteKey(
+            setCaptchaSiteKey(
               data.captcha_site_key || data.turnstile_site_key || '',
             );
           } else {
-            setTurnstileEnabled(false);
+            setCaptchaEnabled(false);
             setCaptchaProvider('turnstile');
-            setTurnstileSiteKey('');
+            setCaptchaSiteKey('');
           }
         }
       } catch (e) {
@@ -366,22 +367,14 @@ const PersonalSetting = () => {
       return;
     }
     setDisableButton(true);
-    if (turnstileEnabled && turnstileToken === '') {
+    if (captchaEnabled && captchaToken === '') {
       showInfo(t('请稍后几秒重试，验证码正在检查用户环境！'));
       return;
     }
     setLoading(true);
-    const encodedToken = encodeURIComponent(turnstileToken);
-    let captchaQuery = '';
-    if (turnstileToken) {
-      if (captchaProvider === 'hcaptcha') {
-        captchaQuery = `&hcaptcha=${encodedToken}&captcha=${encodedToken}`;
-      } else {
-        captchaQuery = `&turnstile=${encodedToken}&captcha=${encodedToken}`;
-      }
-    }
+    const captchaQuery = getCaptchaQueryString(captchaToken, captchaProvider);
     const res = await API.get(
-      `/api/verification?email=${inputs.email}${captchaQuery}`,
+      `/api/verification?email=${inputs.email}${captchaQuery ? `&${captchaQuery}` : ''}`,
     );
     const { success, message } = res.data;
     if (success) {
@@ -480,9 +473,9 @@ const PersonalSetting = () => {
               <CheckinCalendar
                 t={t}
                 status={status}
-                turnstileEnabled={turnstileEnabled}
+                captchaEnabled={captchaEnabled}
                 captchaProvider={captchaProvider}
-                turnstileSiteKey={turnstileSiteKey}
+                captchaSiteKey={captchaSiteKey}
               />
             </div>
           )}
@@ -537,10 +530,10 @@ const PersonalSetting = () => {
         disableButton={disableButton}
         loading={loading}
         countdown={countdown}
-        turnstileEnabled={turnstileEnabled}
+        captchaEnabled={captchaEnabled}
         captchaProvider={captchaProvider}
-        turnstileSiteKey={turnstileSiteKey}
-        setTurnstileToken={setTurnstileToken}
+        captchaSiteKey={captchaSiteKey}
+        setCaptchaToken={setCaptchaToken}
       />
 
       <WeChatBindModal
@@ -561,10 +554,10 @@ const PersonalSetting = () => {
         handleInputChange={handleInputChange}
         deleteAccount={deleteAccount}
         userState={userState}
-        turnstileEnabled={turnstileEnabled}
+        captchaEnabled={captchaEnabled}
         captchaProvider={captchaProvider}
-        turnstileSiteKey={turnstileSiteKey}
-        setTurnstileToken={setTurnstileToken}
+        captchaSiteKey={captchaSiteKey}
+        setCaptchaToken={setCaptchaToken}
       />
 
       <ChangePasswordModal
@@ -574,10 +567,10 @@ const PersonalSetting = () => {
         inputs={inputs}
         handleInputChange={handleInputChange}
         changePassword={changePassword}
-        turnstileEnabled={turnstileEnabled}
+        captchaEnabled={captchaEnabled}
         captchaProvider={captchaProvider}
-        turnstileSiteKey={turnstileSiteKey}
-        setTurnstileToken={setTurnstileToken}
+        captchaSiteKey={captchaSiteKey}
+        setCaptchaToken={setCaptchaToken}
       />
     </div>
   );

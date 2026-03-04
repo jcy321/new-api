@@ -33,10 +33,10 @@ const EmailBindModal = ({
   disableButton,
   loading,
   countdown,
-  turnstileEnabled,
+  captchaEnabled,
   captchaProvider,
-  turnstileSiteKey,
-  setTurnstileToken,
+  captchaSiteKey,
+  setCaptchaToken,
 }) => {
   return (
     <Modal
@@ -91,13 +91,13 @@ const EmailBindModal = ({
           prefix={<IconKey />}
         />
 
-        {turnstileEnabled && (
+        {captchaEnabled && (
           <div className='flex justify-center'>
             <CaptchaWidget
               provider={captchaProvider}
-              siteKey={turnstileSiteKey}
+              siteKey={captchaSiteKey}
               onVerify={(token) => {
-                setTurnstileToken(token);
+                setCaptchaToken(token);
               }}
             />
           </div>
