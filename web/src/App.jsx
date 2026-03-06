@@ -18,7 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 
 import React, { lazy, Suspense, useContext, useMemo } from 'react';
-import { Route, Routes, useLocation, useParams } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import Loading from './components/common/ui/Loading';
 import { AuthRedirect, PrivateRoute, AdminRoute } from './helpers/auth';
 import { StatusContext } from './context/Status';
@@ -59,7 +59,14 @@ const PasswordResetConfirm = lazy(
 const OAuth2Callback = lazy(() => import('./components/auth/OAuth2Callback'));
 
 function DynamicOAuth2Callback() {
-  const { provider } = useParams();
+  const { provider: rawProvider = '' } = useParams();
+  const provider = rawProvider.trim();
+  const isValidProvider = /^[a-zA-Z0-9_-]{1,64}$/.test(provider);
+
+  if (!isValidProvider) {
+    return <Navigate to='/forbidden' replace />;
+  }
+
   return <OAuth2Callback type={provider} />;
 }
 
