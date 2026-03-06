@@ -21,33 +21,83 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
-import enTranslation from './locales/en.json';
-import frTranslation from './locales/fr.json';
 import zhCNTranslation from './locales/zh-CN.json';
-import zhTWTranslation from './locales/zh-TW.json';
-import ruTranslation from './locales/ru.json';
-import jaTranslation from './locales/ja.json';
-import viTranslation from './locales/vi.json';
+const DEFAULT_LANGUAGE = 'zh-CN';
+const SUPPORTED_LANGUAGES = ['en', 'zh-CN', 'zh-TW', 'fr', 'ru', 'ja', 'vi'];
+const localeLoaders = import.meta.glob('./locales/*.json');
+
+function normalizeLanguage(language) {
+  if (!language) {
+    return DEFAULT_LANGUAGE;
+  }
+  if (SUPPORTED_LANGUAGES.includes(language)) {
+    return language;
+  }
+  const base = language.split('-')[0];
+  if (base === 'zh') {
+    return DEFAULT_LANGUAGE;
+  }
+  const matched = SUPPORTED_LANGUAGES.find((lang) => lang === base);
+  return matched || DEFAULT_LANGUAGE;
+}
+
+async function ensureLanguageResources(language) {
+  const normalizedLanguage = normalizeLanguage(language);
+  if (i18n.hasResourceBundle(normalizedLanguage, 'translation')) {
+    return normalizedLanguage;
+  }
+
+  const loader = localeLoaders[`./locales/${normalizedLanguage}.json`];
+  if (!loader) {
+    return DEFAULT_LANGUAGE;
+  }
+
+  try {
+    const module = await loader();
+    const translation =
+      module?.default?.translation || module?.translation || module?.default;
+    if (translation) {
+      i18n.addResourceBundle(
+        normalizedLanguage,
+        'translation',
+        translation,
+        true,
+        true,
+      );
+    }
+  } catch (error) {
+    console.error('Failed to load locale:', normalizedLanguage, error);
+    return DEFAULT_LANGUAGE;
+  }
+
+  return normalizedLanguage;
+}
 
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     load: 'currentOnly',
+    supportedLngs: SUPPORTED_LANGUAGES,
     resources: {
-      en: enTranslation,
-      'zh-CN': zhCNTranslation,
-      'zh-TW': zhTWTranslation,
-      fr: frTranslation,
-      ru: ruTranslation,
-      ja: jaTranslation,
-      vi: viTranslation,
+      [DEFAULT_LANGUAGE]: zhCNTranslation,
     },
-    fallbackLng: 'zh-CN',
+    fallbackLng: DEFAULT_LANGUAGE,
     nsSeparator: false,
     interpolation: {
       escapeValue: false,
     },
   });
+
+const initialLanguage = normalizeLanguage(i18n.resolvedLanguage || i18n.language);
+void ensureLanguageResources(initialLanguage).then((loadedLanguage) => {
+  if (loadedLanguage !== i18n.language) {
+    i18n.changeLanguage(loadedLanguage);
+  }
+});
+
+i18n.on('languageChanged', (language) => {
+  void ensureLanguageResources(language);
+});
 
 export default i18n;
