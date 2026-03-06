@@ -17,10 +17,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 
-import React, { useEffect, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
 import { Layout, TabPane, Tabs } from '@douyinfe/semi-ui';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import Loading from '../../components/common/ui/Loading';
 import {
   Settings,
   Calculator,
@@ -36,19 +37,23 @@ import {
   Activity,
 } from 'lucide-react';
 
-import SystemSetting from '../../components/settings/SystemSetting';
 import { isRoot } from '../../helpers';
-import OtherSetting from '../../components/settings/OtherSetting';
-import OperationSetting from '../../components/settings/OperationSetting';
-import RateLimitSetting from '../../components/settings/RateLimitSetting';
-import ModelSetting from '../../components/settings/ModelSetting';
-import DashboardSetting from '../../components/settings/DashboardSetting';
-import RatioSetting from '../../components/settings/RatioSetting';
-import ChatsSetting from '../../components/settings/ChatsSetting';
-import DrawingSetting from '../../components/settings/DrawingSetting';
-import PaymentSetting from '../../components/settings/PaymentSetting';
-import ModelDeploymentSetting from '../../components/settings/ModelDeploymentSetting';
-import PerformanceSetting from '../../components/settings/PerformanceSetting';
+const SystemSetting = lazy(() => import('../../components/settings/SystemSetting'));
+const OtherSetting = lazy(() => import('../../components/settings/OtherSetting'));
+const OperationSetting = lazy(() => import('../../components/settings/OperationSetting'));
+const RateLimitSetting = lazy(() => import('../../components/settings/RateLimitSetting'));
+const ModelSetting = lazy(() => import('../../components/settings/ModelSetting'));
+const DashboardSetting = lazy(() => import('../../components/settings/DashboardSetting'));
+const RatioSetting = lazy(() => import('../../components/settings/RatioSetting'));
+const ChatsSetting = lazy(() => import('../../components/settings/ChatsSetting'));
+const DrawingSetting = lazy(() => import('../../components/settings/DrawingSetting'));
+const PaymentSetting = lazy(() => import('../../components/settings/PaymentSetting'));
+const ModelDeploymentSetting = lazy(
+  () => import('../../components/settings/ModelDeploymentSetting'),
+);
+const PerformanceSetting = lazy(
+  () => import('../../components/settings/PerformanceSetting'),
+);
 
 const Setting = () => {
   const { t } = useTranslation();
@@ -204,7 +209,9 @@ const Setting = () => {
           >
             {panes.map((pane) => (
               <TabPane itemKey={pane.itemKey} tab={pane.tab} key={pane.itemKey}>
-                {tabActiveKey === pane.itemKey && pane.content}
+                {tabActiveKey === pane.itemKey && (
+                  <Suspense fallback={<Loading />}>{pane.content}</Suspense>
+                )}
               </TabPane>
             ))}
           </Tabs>
