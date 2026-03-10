@@ -130,3 +130,78 @@ For request structs that are parsed from client JSON and then re-marshaled to up
   - field absent in client JSON => `nil` => omitted on marshal;
   - field explicitly set to zero/false => non-`nil` pointer => must still be sent upstream.
 - Avoid using non-pointer scalars with `omitempty` for optional request parameters, because zero values (`0`, `0.0`, `false`) will be silently dropped during marshal.
+
+---
+
+## Development Workflow
+
+### Adding New Routes
+
+1. Create controller in `controller/<feature>.go`
+2. Create router in `router/<feature>-router.go`
+3. Register router in `router/main.go` by calling `Set<Feature>Router(router)`
+
+### Static File Serving
+
+- Frontend uses embedded filesystem (`//go:embed web/dist`)
+- For dynamic content (like availability reports), serve from filesystem directly:
+  - Use `os.ReadFile()` to read files at runtime
+  - Allows updates without rebuilding
+
+### Scheduled Tasks
+
+- Use goroutines in `main.go` with `go func() { ... }()`
+- Check `common.IsMasterNode` for cluster deployments
+- Example: `go controller.AutomaticallyTestChannels()`
+
+### Code Style (UOP Principles)
+
+Follow UOP (面向理解编程) conventions:
+
+**Naming:**
+- Variables/functions: `camelCase` (e.g., `getModelList`, `responseTime`)
+- Classes/types: `PascalCase` (e.g., `AvailabilityRouter`)
+- Booleans: prefix with `is/has/can/should` (e.g., `isAvailable`, `hasPermission`)
+
+**Comments:**
+- Every business logic line MUST have trailing Chinese comment
+- Use `// --- Section Name ---` to separate logic phases
+- Explain business intent, not syntax
+
+**Structure:**
+- Guard clauses first, then zero-indent main logic
+- Max 3 levels of indentation
+- Related code together, unrelated code separated by blank line
+
+**Example:**
+```go
+// ServeAvailability 提供模型可用性检测报告的静态文件服务
+func ServeAvailability(c *gin.Context) {
+    relativePath := c.Param("path") // 获取请求的相对路径
+    
+    // --- 处理默认路径 ---
+    if relativePath == "" || relativePath == "/" {
+        relativePath = "/index.html" // 默认返回首页
+    }
+    
+    // ... rest of logic with trailing comments
+}
+```
+
+### Git Commit Convention
+
+Use Conventional Commits format:
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `docs:` - Documentation
+- `refactor:` - Code refactoring
+- `chore:` - Build/tooling
+
+Example: `feat: 添加模型可用性检测模块`
+
+### Testing New Features
+
+1. For Go code: verify compilation with `go build`
+2. For Python scripts: ensure dependencies are available (`requests`)
+3. Check JSON field naming matches between Python output and JavaScript consumption
+4. Test routing by accessing the endpoint directly
